@@ -1,0 +1,8 @@
+.bsp
+.target
+a.out
+ignore
+target
+*.log
+tmp
+.history
