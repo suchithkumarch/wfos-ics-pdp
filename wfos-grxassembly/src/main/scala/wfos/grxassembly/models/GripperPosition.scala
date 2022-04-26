@@ -32,7 +32,6 @@ sealed abstract class BluegrxPosition(override val entryName: String) extends Gr
     if (nextId < 0 || nextId >= BluegrxPosition.values.length) this
     else BluegrxPosition.values(nextId)
   }
-
 }
 
 object BluegrxPosition extends Enum[BluegrxPosition] {
@@ -41,6 +40,6 @@ object BluegrxPosition extends Enum[BluegrxPosition] {
   private lazy val choices: Choices              = Choices.from(values.map(_.entryName): _*)
   def makeChoiceKey(keyName: String): GChoiceKey = ChoiceKey.make(keyName, choices)
 
-  case object left_egde  extends BluegrxPosition("0")
-  case object right_edge extends BluegrxPosition("100")
+  case object left_edge  extends BluegrxPosition("0mm")
+  case object right_edge extends BluegrxPosition("100mm")
 }

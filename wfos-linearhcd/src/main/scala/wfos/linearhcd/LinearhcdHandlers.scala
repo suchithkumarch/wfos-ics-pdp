@@ -9,9 +9,9 @@ import csw.params.commands.CommandResponse._
 import csw.params.commands.ControlCommand
 import csw.time.core.models.UTCTime
 import csw.params.core.models.Id
-import csw.prefix.models.{Prefix, Subsystem}
+import csw.prefix.models.Prefix
 
-import scala.concurrent.{ExecutionContextExecutor}
+import scala.concurrent.ExecutionContextExecutor
 
 /**
  * Domain specific logic should be written in below handlers.
@@ -21,6 +21,7 @@ import scala.concurrent.{ExecutionContextExecutor}
  * and if validation is successful, then onSubmit hook gets invoked.
  * You can find more information on this here : https://tmtsoftware.github.io/csw/commons/framework.html
  */
+
 class LinearhcdHandlers(ctx: ActorContext[TopLevelActorMessage], cswCtx: CswContext) extends ComponentHandlers(ctx, cswCtx) {
 
   import cswCtx._
@@ -34,7 +35,9 @@ class LinearhcdHandlers(ctx: ActorContext[TopLevelActorMessage], cswCtx: CswCont
 
   override def onLocationTrackingEvent(trackingEvent: TrackingEvent): Unit = {}
 
-  override def validateCommand(runId: Id, controlCommand: ControlCommand): ValidateCommandResponse = Accepted(runId)
+  override def validateCommand(runId: Id, controlCommand: ControlCommand): ValidateCommandResponse = {
+    Accepted(runId)
+  }
 
   override def onSubmit(runId: Id, controlCommand: ControlCommand): SubmitResponse = Completed(runId)
 

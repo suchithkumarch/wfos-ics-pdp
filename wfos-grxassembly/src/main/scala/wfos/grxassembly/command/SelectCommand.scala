@@ -1,43 +1,36 @@
 package wfos.grxassembly.command
 
-import akka.http.scaladsl.model.StatusCodes.Accepted
-import wfos.grxassembly.models.{BluegrxPosition, GripperPosition}
-import csw.params.commands.CommandIssue.{MissingKeyIssue, ParameterValueOutOfRangeIssue}
-import csw.params.commands.CommandResponse.ValidateCommandResponse
+import wfos.grxassembly.models.BluegrxPosition
 import csw.params.commands.{CommandIssue, CommandName, Setup}
 import csw.params.core.generics.{GChoiceKey, Key, KeyType, Parameter}
-import csw.params.core.models.{Id, Units}
+import csw.params.core.models.Choice
 
 abstract class SelectCommand {
   val Name: CommandName = CommandName("SELECT")
-//  val gripper1Key: GChoiceKey
-  def Validate(setup: Setup): Either[CommandIssue, Parameter[String]]
+  val gripperKey: GChoiceKey
+  def Validate(setup: Setup): Either[CommandIssue, Parameter[Double]]
 }
 
 object BlueSelectCommand extends SelectCommand {
 
-  val bgidKey: Key[String]        = KeyType.StringKey.make("bgId")
+  val gripperKey: GChoiceKey      = BluegrxPosition.makeChoiceKey("BgidKey")
   val GratingModeKey: Key[String] = KeyType.StringKey.make("GratingModes")
   val targetAngleKey: Key[Double] = KeyType.DoubleKey.make("TargetAngle")
+  val degreeKey: Key[Double]      = KeyType.DoubleKey.make("degree")
+  val cwKey: Key[Double]          = KeyType.DoubleKey.make("commonWavelength")
 
-  val degreeKey: Key[Double]                       = KeyType.DoubleKey.make("degree")
-  def setdegree(degree: Double): Parameter[Double] = cwKey.set(degree).withUnits(Units.degree)
-  val lowdegreeKey                                 = setdegree(0)
-  val highdegreeKey                                = setdegree(55)
+  val lowdegreeKey  = 0
+  val highdegreeKey = 55
 
-  val cwKey: Key[Double]                        = KeyType.DoubleKey.make("commonWavelength")
-  def setcwLimit(cw: Double): Parameter[Double] = cwKey.set(cw).withUnits(Units.angstrom)
-  val lowLimitKey                               = setcwLimit(3100)
-  val highLimitKey                              = setcwLimit(9000)
+  val lowLimitKey  = 3100
+  val highLimitKey = 9000
 
-//  override val gripper1Key: GChoiceKey = BluegrxPosition.makeChoiceKey("gripper1")
-
-  override def Validate(setup: Setup): Either[CommandIssue, Parameter[String]] = {
+  override def Validate(setup: Setup): Either[CommandIssue, Parameter[Double]] = {
     val issueOraccepted = for {
-      bgid        <- setup.get(bgidKey).toRight(CommandIssue.WrongParameterTypeIssue("bgid not found"))
+      bgid        <- setup.get(gripperKey).toRight(CommandIssue.WrongParameterTypeIssue("bgid not found"))
       targetAngle <- setup.get(targetAngleKey).toRight(CommandIssue.WrongParameterTypeIssue("targetAngle not found"))
       cw          <- setup.get(cwKey).toRight(CommandIssue.WrongParameterTypeIssue("CW not found"))
-      gratingmode <- setup.get(GratingModeKey).toRight(CommandIssue.WrongParameterTypeIssue("GratingMode not found"))
+      _           <- setup.get(GratingModeKey).toRight(CommandIssue.WrongParameterTypeIssue("GratingMode not found"))
       _           <- inRange(cw, lowLimitKey, highLimitKey)
       _           <- inRange(targetAngle, lowdegreeKey, highdegreeKey)
       param       <- validateParam(bgid, targetAngle)
@@ -45,29 +38,29 @@ object BlueSelectCommand extends SelectCommand {
     issueOraccepted
   }
 
-  private def inRange(parameter: Parameter[Double], minVal: Parameter[Double], maxVal: Parameter[Double]) = {
-    if (parameter.head >= minVal.head & parameter.head <= maxVal.head) Right(parameter)
+  private def inRange(parameter: Parameter[Double], minVal: Double, maxVal: Double) = {
+    if (parameter.head >= minVal & parameter.head <= maxVal) Right(parameter)
     else Left(CommandIssue.WrongParameterTypeIssue(s"${parameter.keyName} should be in range of $minVal and $maxVal"))
   }
 
-  private def validateParam(bgid: Parameter[String], targetAngle: Parameter[Double]) = {
-    bgid.head match {
+  private def validateParam(bgid: Parameter[Choice], targetAngle: Parameter[Double]) = {
+    bgid.keyName match {
       case "bgid1" =>
-        if (targetAngle.values.head == 0) Right(bgid)
+        if (targetAngle.values.head == 0) Right(targetAngle)
         else Left(CommandIssue.ParameterValueOutOfRangeIssue(s"targetAngle should be in range"))
       case "bgid2" =>
-        if (targetAngle.values.head == 15) Right(bgid)
+        if (targetAngle.values.head == 15) Right(targetAngle)
         else Left(CommandIssue.ParameterValueOutOfRangeIssue(s"targetAngle should be in range"))
       case "bgid3" =>
-        if (targetAngle.values.head >= 25 & targetAngle.values.head <= 35) Right(bgid)
+        if (targetAngle.values.head >= 25 & targetAngle.values.head <= 35) Right(targetAngle)
         else Left(CommandIssue.ParameterValueOutOfRangeIssue(s"targetAngle should be in range"))
       case "bgid4" =>
-        if (targetAngle.values.head == 45) Right(bgid)
+        if (targetAngle.values.head == 45) Right(targetAngle)
         else Left(CommandIssue.ParameterValueOutOfRangeIssue(s"targetAngle should be in range"))
       case "bgid5" =>
-        if (targetAngle.values.head == 45) Right(bgid)
+        if (targetAngle.values.head == 45) Right(targetAngle)
         else Left(CommandIssue.ParameterValueOutOfRangeIssue(s"targetAngle should be in range"))
-      case id => Left(CommandIssue.WrongParameterTypeIssue(s"Wrong Bgid"))
+      case _ => Left(CommandIssue.WrongParameterTypeIssue(s"Wrong Bgid"))
     }
   }
 }
